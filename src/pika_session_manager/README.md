@@ -57,7 +57,9 @@ Bag 模式改由 Virtual Receiver 提供同名 `set_enabled` 服务，因此正�
 | `reset_dispatch_delay_ms` | 4000 | 双侧停用与 Recorder STOP 成功回复较晚者之后的归位延迟；Recorder 未成功确认时从双侧停用确认起算 |
 | `stop_state_timeout_ms` | 6000 | 等待本轮双侧新 disabled State 的上限；超时不移动并进入 FAILED |
 | `left_reset_action` / `right_reset_action` | `/l/execute_motion` / `/r/execute_motion` | 左右回零服务端名称 |
-| `left_reset_joint_degrees` | `[12.172,25.223,73.054,-16.703,80.307,14.455]` | 左臂正常回零目标，度 |
+| `left_reset_position_option` | **2** | 左臂归位位置选项：1 为原位置，2 为新采集位置；修改后重启 launch 生效 |
+| `left_reset_joint_degrees` | `[12.172,25.223,73.054,-16.703,80.307,14.455]` | 选项 1：左臂原归位目标，度 |
+| `left_reset_joint_degrees_2` | `[109.533,25.227,73.064,1.262,71.036,14.435]` | 选项 2：2026-10-26 从 `/l/joint_states` 采集的左臂目标，度 |
 | `right_reset_joint_degrees` | `[-9.89,18.046,79.074,15.505,79.606,-6.194]` | 右臂正常回零目标，度 |
 | `middle_reset_joint_degrees` | `[0,17.997,70,0,90,8.997]` | 仅校验/保留 |
 | `reset_velocity_percent` / `reset_blend_radius_percent` | 10 / 0 | MoveJ 速度与交融比例 |

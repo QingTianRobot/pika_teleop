@@ -28,14 +28,16 @@ STOP 服务立即回执，不等 Action Server 或机器人运动。Action Serve
 | `periodic_summary` | false | false（未写入 YAML） | 每秒完整摘要开关 |
 | `reset_on_user_stop` | false | **true** | 启用单侧正常 STOP 复位；关闭时维持原 Bag 停止行为 |
 | `left_reset_action` / `right_reset_action` | `/l/execute_motion` / `/r/execute_motion` | 同左 | 对应侧外部 Action 名称 |
-| `left_reset_joint_degrees` | 未设置 | `[12.172, 25.223, 73.054, -16.703, 80.307, 14.455]` | 左臂六关节预设角，单位度 |
+| `left_reset_position_option` | 1 | **2** | 左臂归位位置选项：1 为原位置，2 为新采集位置；修改后重启 launch 生效 |
+| `left_reset_joint_degrees` | 未设置 | `[12.172, 25.223, 73.054, -16.703, 80.307, 14.455]` | 选项 1：左臂原归位目标，度 |
+| `left_reset_joint_degrees_2` | 未设置 | `[109.533, 25.227, 73.064, 1.262, 71.036, 14.435]` | 选项 2：2026-10-26 从 `/l/joint_states` 采集的左臂目标，度 |
 | `right_reset_joint_degrees` | 未设置 | `[-9.89, 18.046, 79.074, 15.505, 79.606, -6.194]` | 右臂六关节预设角，单位度 |
 | `reset_velocity_percent` / `reset_blend_radius_percent` | 10 / 0 | 10 / 0 | Goal 的速度百分比和融合半径百分比，均需在 0–100 |
 | `reset_timeout_sec` | 120 | 120 | 写入 Goal 的服务端超时字段；不是本节点等待时长 |
 | `reset_dispatch_delay_ms` | 150 | **4000** | 新 disabled State 之后的异步交接延迟；Bag 试验值覆盖外部 router 的 3000 ms 输入超时和取消耗时，不保证驱动已释放运动所有权 |
 | `reset_stop_confirm_timeout_ms` | 1000 | 1000 | STOP 后等待新 disabled State 的最长时间；超时取消复位 |
 
-Bag YAML 的初始复位关节角、Action 名称及速度参数来自当时的正式 YAML，但已复制成独立配置；运行时不读取正式 YAML。启用复位时，两个关节角数组均须为六个有限数，Action 名称非空，其余参数须在上述范围内，否则节点启动失败。Bridge 的 Bag 原始数据 `stale_stop_ms=2000 ms` 与这里的 State watchdog 是两层不同检查；Mapper 还有独立的 `state_timeout_ms=200 ms`。
+Bag YAML 的初始复位关节角、Action 名称及速度参数来自当时的正式 YAML，但已复制成独立配置；运行时不读取正式 YAML。启用复位时，选中的左臂关节角数组和右臂数组均须为六个有限数，Action 名称非空，其余参数须在上述范围内，否则节点启动失败。Bridge 的 Bag 原始数据 `stale_stop_ms=2000 ms` 与这里的 State watchdog 是两层不同检查；Mapper 还有独立的 `state_timeout_ms=200 ms`。
 
 ## 启动和检查
 

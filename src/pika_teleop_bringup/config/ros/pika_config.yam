@@ -72,7 +72,10 @@ pika_session_manager:
     stop_state_timeout_ms: 6000.0
     left_reset_action: "/l/execute_motion"
     right_reset_action: "/r/execute_motion"
+    # Left reset preset: 1=original, 2=2026-10-26 /l/joint_states capture.
+    left_reset_position_option: 2
     left_reset_joint_degrees: [12.172, 25.223, 73.054, -16.703, 80.307, 14.455]
+    left_reset_joint_degrees_2: [109.533, 25.227, 73.064, 1.262, 71.036, 14.435]
     middle_reset_joint_degrees: [0.0, 17.997, 70.0, 0.0, 90.0, 8.997]
     right_reset_joint_degrees: [-9.89, 18.046, 79.074, 15.505, 79.606, -6.194]
     reset_velocity_percent: 10

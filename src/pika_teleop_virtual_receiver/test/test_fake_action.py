@@ -34,12 +34,15 @@ class TestFakeAction(unittest.TestCase):
         self.reject_goal = False
         self.received_goal = None
         joints = [12.172, 25.223, 73.054, -16.703, 80.307, 14.455]
+        selected_joints = [109.533, 25.227, 73.064, 1.262, 71.036, 14.435]
         params = [
             Parameter('reset_on_user_stop', value=True),
             Parameter('state_timeout_ms', value=2000.0),
             Parameter('left_reset_action', value='/test/l/execute_motion'),
             Parameter('right_reset_action', value='/test/r/execute_motion'),
             Parameter('left_reset_joint_degrees', value=joints),
+            Parameter('left_reset_joint_degrees_2', value=selected_joints),
+            Parameter('left_reset_position_option', value=2),
             Parameter('right_reset_joint_degrees', value=[0.0] * 6),
             Parameter('reset_dispatch_delay_ms', value=150.0),
             Parameter('reset_stop_confirm_timeout_ms', value=1000.0),
@@ -186,7 +189,7 @@ class TestFakeAction(unittest.TestCase):
         self.assertEqual(self.received_goal.reference_type, ExecuteMotion.Goal.BASE)
         self.assertEqual(
             list(self.received_goal.joint_degrees),
-            [12.172, 25.223, 73.054, -16.703, 80.307, 14.455],
+            [109.533, 25.227, 73.064, 1.262, 71.036, 14.435],
         )
         self.assertEqual(self.received_goal.velocity_percent, 10)
         self.assertFalse(self.release_goal.is_set())

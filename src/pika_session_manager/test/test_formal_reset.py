@@ -154,6 +154,20 @@ def goals(manager):
 
 
 class TestFormalReset(unittest.TestCase):
+    def test_left_reset_position_selection(self):
+        self.assertEqual(
+            PikaSessionManager._left_reset_parameter_name(1),
+            'left_reset_joint_degrees',
+        )
+        self.assertEqual(
+            PikaSessionManager._left_reset_parameter_name(2),
+            'left_reset_joint_degrees_2',
+        )
+        for option in (0, 3, True, 2.0, '2'):
+            with self.subTest(option=option):
+                with self.assertRaisesRegex(ValueError, 'must be 1 or 2'):
+                    PikaSessionManager._left_reset_parameter_name(option)
+
     def test_delay_parameter_accepts_zero_and_rejects_invalid(self):
         for value in (0.0, 4000.0):
             node = SimpleNamespace(

@@ -76,11 +76,12 @@ class PikaSessionManager(Node):
         self.stop_state_timeout_ns = int(
             self._positive_parameter('stop_state_timeout_ms') * 1.0e6
         )
+        left_reset_parameter = self._left_reset_parameter_name(
+            self.get_parameter('left_reset_position_option').value
+        )
         self.reset_joints = {
-            side: self._array_parameter(
-                f'{side}_reset_joint_degrees', 6
-            )
-            for side in self.SIDES
+            'left': self._array_parameter(left_reset_parameter, 6),
+            'right': self._array_parameter('right_reset_joint_degrees', 6),
         }
         self._array_parameter('middle_reset_joint_degrees', 6)
 
@@ -203,6 +204,10 @@ class PikaSessionManager(Node):
                 f'{side}_reset_joint_degrees',
                 Parameter.Type.DOUBLE_ARRAY,
             )
+        self.declare_parameter('left_reset_position_option', 1)
+        self.declare_parameter(
+            'left_reset_joint_degrees_2', Parameter.Type.DOUBLE_ARRAY
+        )
         self.declare_parameter('reset_velocity_percent', 10)
         self.declare_parameter('reset_blend_radius_percent', 0)
         self.declare_parameter('reset_timeout_sec', 120.0)
@@ -242,6 +247,15 @@ class PikaSessionManager(Node):
         ):
             raise ValueError(f'{name} must contain {size} finite values')
         return values
+
+    @staticmethod
+    def _left_reset_parameter_name(option: int) -> str:
+        if type(option) is not int or option not in (1, 2):
+            raise ValueError('left_reset_position_option must be 1 or 2')
+        return (
+            'left_reset_joint_degrees'
+            if option == 1 else 'left_reset_joint_degrees_2'
+        )
 
     def _publish_state(self) -> None:
         allowed = self.state in (self.READY, self.RECORDING)

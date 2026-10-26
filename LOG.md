@@ -141,3 +141,9 @@
 - 现场三次右侧 `USER_STOP` 均成功下发 MoveJ Goal，但 RealMan 驱动拒绝，工控机日志为 `Rejecting motion goal: arm r is busy`。行为树 Pika 速度 router 不接收 `USER_STOP`，只在速度输入停止 3000 ms 后开始取消速度 Action；原 Bag 交接延迟 150 ms 早于右臂释放。
 - 将 Bag YAML 的可调项 `reset_dispatch_delay_ms` 设为 **4000.0 ms**，从新 disabled State 被确认时开始计时；正式 YAML 和 Virtual Receiver 的独立运行代码默认值不变。同步更新三个 README 的当前值。
 - 这是等待外部 router 超时的现场试验值，不是释放右臂所有权的确认。若其他控制端仍占用右臂，或取消耗时超过余量，MoveJ 仍可能被拒绝；长期方案需明确取消速度 Action 并确认释放后再归位。
+
+## 2026-10-26：左臂归位位置选项
+
+- 正式与 Bag YAML 均新增 `left_reset_position_option`：`1` 选原归位角 `[12.172, 25.223, 73.054, -16.703, 80.307, 14.455]`，`2` 选从 `/l/joint_states` 采集的新归位角 `[109.533, 25.227, 73.064, 1.262, 71.036, 14.435]`；当前两模式均为 `2`。
+- Session Manager 和 Virtual Receiver 启动时按选项读取左臂目标；右臂配置与归位流程不变。配置更改需重启对应 launch 才生效；已有 launch 未被本次部署重启。
+- 部署机 `colcon build --symlink-install --packages-select pika_session_manager pika_teleop_virtual_receiver pika_teleop_bringup` 通过；正式模式 11 项逻辑测试和 Bag 模式 6 项隔离假 Action 测试通过，安装目录的两份 YAML 与源码一致。未启动 launch 或向真机发送 Action；物理归位需现场确认。
