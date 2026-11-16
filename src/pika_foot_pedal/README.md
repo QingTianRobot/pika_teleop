@@ -14,6 +14,18 @@ test -r /dev/input/by-id/usb-0483_5750-if01-event-kbd && echo readable
 
 运行遥操的用户必须有这个 event 设备的读取权限。部署机 user2 已安装 `python3-evdev`，并在 `/etc/udev/rules.d/99-pika-foot-pedal.rules` 用 USB VID `0483`、PID `5750`、接口 `01` 仅匹配该脚踏设备，赋予 `user2` 组读取权限；迁移机器时需按实际账号重新设置。不需以 root 运行整套遥操。设备路径按 USB 标识配置，避免 `eventN` 编号漂移。默认 `key_code=auto` 从这个专用设备的第一下按键检测并记录键码；若设备有多个按键，使用 `evtest /dev/input/...` 查出代码后以 `foot_pedal_key_code:=KEY_SPACE` 或数字指定。启动时若脚踏板已踩住，必须先松开，再重新踩下才会 START。
 
+## 用键盘代替脚踏板
+
+普通 USB 键盘也是 evdev 键盘设备，可直接当“踏板”用。例如 W/A/S/D 任一键启停：
+
+```bash
+ros2 launch pika_teleop_bringup pika_bag.launch.py start_foot_pedal:=true \
+  foot_pedal_device:=/dev/input/by-id/usb-<键盘>-event-kbd \
+  foot_pedal_key_code:=KEY_W,KEY_A,KEY_S,KEY_D
+```
+
+节点读取的是整个设备的按键（与哪个窗口有焦点无关），在这块键盘上任何地方打字按到这些键都会启停遥操，建议用一块专用小键盘，并只给运行用户这块键盘的读取权限（udev 规则按 USB VID/PID 匹配）。
+
 ## 使用
 
 ```bash
@@ -36,6 +48,6 @@ ros2 topic echo /foot_pedal/enabled
 
 `/foot_pedal/pressed` 是 20 Hz `std_msgs/Bool` 消抖后物理按键状态，短脉冲后会回到 `false`；`/foot_pedal/enabled` 是 20 Hz 的逻辑启停请求状态，`true` 表示已经请求启动，**不等同于双臂已经 ACTIVE**。边沿会立即补发。脚踏模式下 Bridge 的夹爪双击/三击识别关闭，夹爪位置数据照常下发；`pika_start.sh`、`pika_stop.sh` 和手动服务仍可用。第二次踩下走正常 `USER_STOP`，Bag 保留每侧 4000 ms 归位交接，正式模式保留一次 Recorder STOP 与正常归位。尚未进入 ACTIVE 的 START 被取消时不会触发自动归位。设备失联使用 `STALE_STOP`，不会自动归位。
 
-参数：`device`（evdev 路径）、`key_code`（`auto`/`KEY_*`/数字）、`debounce_ms`（默认 30）、`retrigger_guard_ms`（默认 150，忽略过快重复踩下）、`pressed_topic`（默认 `/foot_pedal/pressed`）、`enabled_topic`（默认 `/foot_pedal/enabled`）、`start_timeout_ms`（默认 10000）。设备、键码、消抖和重复触发保护可由两份 launch 的 `foot_pedal_*` 参数覆盖；独立运行时用 ROS 参数。
+参数：`device`（evdev 路径）、`key_code`（`auto`/`KEY_*`/数字，或逗号分隔的多个键，如 `KEY_W,KEY_A,KEY_S,KEY_D`：任一列出的键按下算一次踩下，几个键重叠按住只算一次，松开最后一个键才算松开）、`debounce_ms`（默认 30）、`retrigger_guard_ms`（默认 150，忽略过快重复踩下）、`pressed_topic`（默认 `/foot_pedal/pressed`）、`enabled_topic`（默认 `/foot_pedal/enabled`）、`start_timeout_ms`（默认 10000）。设备、键码、消抖和重复触发保护可由两份 launch 的 `foot_pedal_*` 参数覆盖；独立运行时用 ROS 参数。
 
 此脚踏板是人工启停接口，不是硬件急停。松脚不会停止；需要再次踩下、使用手动 STOP 或硬件急停。`SIGKILL`、断电或 ROS 网络完全中断时，节点可能来不及发送 STOP；运动接收器的命令 watchdog 和硬件急停仍需保持有效。停止后的归位 Goal 发出或接受也不代表机械臂已回到安全位置；再次踩下前由操作员现场确认。

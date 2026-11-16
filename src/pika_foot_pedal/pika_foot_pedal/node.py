@@ -3,6 +3,7 @@
 import select
 import signal
 import time
+from types import SimpleNamespace
 
 import rclpy
 from rclpy.node import Node
@@ -56,7 +57,9 @@ class FootPedalNode(Node):
             ) for side in self.SIDES
         ]
         self.device = None
-        self.key_code = None
+        # Listed keys act as one button: pressed while any of them is held.
+        self.key_codes = set()
+        self._held_codes = set()
         self._next_open_ns = 0
         self.phase = 'IDLE'
         self.toggle_enabled = False
@@ -78,16 +81,41 @@ class FootPedalNode(Node):
         )
 
     def _resolve_key_setting(self):
-        if self.key_setting.lower() == 'auto':
+        """`auto`, or one or more comma-separated KEY_* names / numeric codes."""
+        if self.key_setting.strip().lower() == 'auto':
             return
+        names = [name.strip() for name in self.key_setting.split(',') if name.strip()]
+        if not names:
+            raise ValueError(f'invalid key_code={self.key_setting!r}: no key given')
         try:
             import evdev
-            self.key_code = (
-                int(self.key_setting) if self.key_setting.isdecimal()
-                else int(getattr(evdev.ecodes, self.key_setting))
-            )
+            self.key_codes = {
+                int(name) if name.isdecimal() else int(getattr(evdev.ecodes, name))
+                for name in names
+            }
         except (ImportError, AttributeError, ValueError) as exc:
             raise ValueError(f'invalid key_code={self.key_setting}: {exc}') from exc
+
+    def _merge_key_events(self, events):
+        """Turn press/release events of the listed keys into edges of one logical button.
+
+        Emits value 1 when the first listed key goes down and value 0 when the last one
+        is released, so overlapping presses of several keys count as a single press.
+        """
+        merged = []
+        for event in events:
+            if event.code not in self.key_codes:
+                continue
+            was_held = bool(self._held_codes)
+            if event.value == 1:
+                self._held_codes.add(event.code)
+            else:
+                self._held_codes.discard(event.code)
+            if bool(self._held_codes) != was_held:
+                merged.append(SimpleNamespace(
+                    value=1 if self._held_codes else 0, sec=event.sec, usec=event.usec
+                ))
+        return merged
 
     def _publish(self):
         self.publisher.publish(Bool(data=bool(self.debouncer.pressed)))
@@ -102,14 +130,15 @@ class FootPedalNode(Node):
             import evdev
             device = evdev.InputDevice(self.device_path)
             held_keys = set(device.active_keys())
-            if self.key_setting.lower() == 'auto' and held_keys:
-                self.key_code = min(held_keys)
-            held = self.key_code in held_keys if self.key_code is not None else False
+            if self.key_setting.strip().lower() == 'auto' and held_keys and not self.key_codes:
+                self.key_codes = {min(held_keys)}
+            self._held_codes = self.key_codes & held_keys
+            held = bool(self._held_codes)
             self.debouncer.initialize(held, now_ns)
             self.device = device
             self._publish()
             self.get_logger().info(
-                f'Foot pedal connected: {device.path}, key={self.key_code or "auto"}, '
+                f'Foot pedal connected: {device.path}, keys={sorted(self.key_codes) or "auto"}, '
                 f'initially_held={held}'
             )
         except (ImportError, OSError) as exc:
@@ -142,13 +171,13 @@ class FootPedalNode(Node):
             for event in self.device.read():
                 if event.type != evdev.ecodes.EV_KEY or event.value not in (0, 1):
                     continue
-                if self.key_code is None:
+                if not self.key_codes:
                     if event.value != 1:
                         continue
-                    self.key_code = event.code
+                    self.key_codes = {event.code}
                     self.get_logger().info(f'Foot pedal auto-detected key_code={event.code}')
-                if event.code == self.key_code:
-                    key_events.append(event)
+                key_events.append(event)
+            key_events = self._merge_key_events(key_events)
             if key_events:
                 self._consume_key_events(key_events, now_ns)
         except (OSError, EOFError, ValueError) as exc:
