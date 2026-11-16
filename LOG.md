@@ -1,5 +1,10 @@
 # 项目维护记录
 
+## 2026-11-16：Bridge State 与 Mapper 命令改为 30 Hz
+
+- 正式与 Bag YAML 的 Bridge `state_rate_hz`、Mapper `command_rate_hz` 由 20 Hz 改为 **30 Hz**，与 RealMan 侧 30 fps 相机、30 fps 录制导出和 30 Hz `joint_states`/TF（realman_pi PR #98）对齐，录制时不再需要 20→30 Hz 补帧。官方位姿约 125 Hz，30 Hz 采样有余量；速度低通 10 Hz 仍低于 15 Hz Nyquist；夹爪命令仍独立限频最多 4 Hz。
+- 2026-11-16 起 SJDrealman 部署机的 Bag YAML 已是 30 Hz（本地改动，含既有 `reset_on_user_stop: false`）；真实遥操下的跟随效果尚未现场验收。正式模式经 Wi-Fi 的部署（PikaRemote→realman_ts）流量会增加约 1.5 倍，部署前留意丢包。
+
 ## 2026-10-15：正常结束时请求夹爪全开
 
 - 核对 RealMan 只读源码：现有行为树路由订阅 `/pika/l|r/gripper_percentage`，在 Pika 输入模式下转发到 `/gripper_left|right/percentage/command`；夹爪管理器以 `1.0` 表示全开。未改 RealMan 端。

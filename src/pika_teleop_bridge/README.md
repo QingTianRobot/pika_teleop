@@ -1,6 +1,6 @@
 # Pika Teleop Bridge
 
-`pika_teleop_bridge` 的可执行节点是 `pika_teleop_publisher`。它缓存官方 Pika 双 Sense 的四路输入，识别夹爪双击/三击，检查输入时效与位姿跳变，并发布左右独立的 `PikaTeleopState`。正式和 Bag launch 均用 YAML 将 State 周期设为 **20 Hz**；代码单独运行时的默认值仍是 100 Hz。
+`pika_teleop_bridge` 的可执行节点是 `pika_teleop_publisher`。它缓存官方 Pika 双 Sense 的四路输入，识别夹爪双击/三击，检查输入时效与位姿跳变，并发布左右独立的 `PikaTeleopState`。正式和 Bag launch 均用 YAML 将 State 周期设为 **30 Hz**；代码单独运行时的默认值仍是 100 Hz。
 
 ## 输入、输出与 QoS
 

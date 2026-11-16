@@ -1,14 +1,14 @@
 pika_teleop_publisher:
   ros__parameters:
     velocity_max_dt_ms: 150.0
-    state_rate_hz: 20.0
+    state_rate_hz: 30.0
     use_session_gate: false
     stale_stop_ms: 2000.0
     start_service_timeout_ms: 10000.0
 
 pika_realman_mapper:
   ros__parameters:
-    command_rate_hz: 20.0
+    command_rate_hz: 30.0
     state_timeout_ms: 200.0
     left_base_frame: "l/work/pikabase"
     right_base_frame: "r/work/pikabase"
