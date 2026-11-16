@@ -28,8 +28,8 @@ Pose 的姿态字段单独由 `orientation_mapping_mode` 决定：当前 `relati
 |---|---|---|
 | `/pika_teleop/left|right/state` | `pika_teleop_interfaces/msg/PikaTeleopState` | BEST_EFFORT、VOLATILE、depth 1 |
 | `/tf`、`/tf_static` | RealMan TCP 变换 | 正式模式启用时查询一次 |
-| `/pika/l|r/cartesian_pose` | `geometry_msgs/msg/PoseStamped` | 有效会话内 20 Hz；`frame_id` 见下表 |
-| `/pika/l|r/cartesian_velocity` | `geometry_msgs/msg/TwistStamped` | 有效会话内 20 Hz；m/s、rad/s |
+| `/pika/l|r/cartesian_pose` | `geometry_msgs/msg/PoseStamped` | 有效会话内 30 Hz；`frame_id` 见下表 |
+| `/pika/l|r/cartesian_velocity` | `geometry_msgs/msg/TwistStamped` | 有效会话内 30 Hz；m/s、rad/s |
 | `/pika/l|r/gripper_percentage` | `std_msgs/msg/Float32` | 有效会话内独立限频，最多 4 Hz；范围 0–1 |
 | `/tf` | `l_pika_base_link`、`r_pika_base_link` | 有效会话并发布命令时动态广播 |
 

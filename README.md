@@ -54,11 +54,11 @@ flowchart LR
 
 ## 数据与坐标
 
-Bridge 以 `RELIABLE + VOLATILE + KEEP_LAST(1)` 订阅 `/pika_pose_l`、`/pika_pose_r`（`PoseStamped`）和 `/gripper_l/joint_state`、`/gripper_r/joint_state`（`JointState`）。它以 **20 Hz** 发布 `/pika_teleop/left|right/state`（`PikaTeleopState`，`BEST_EFFORT + VOLATILE + depth 1`）。State 含转换后的 `pose`、`twist`、`gripper_position`、`enabled`、`valid`、`velocity_valid`、两路源时间戳及数据年龄。Bridge 的固定预变换是 `(x,y,z)→(-z,y,x)`，State 的 `header.frame_id` 为 `pika_teleop_frame`。
+Bridge 以 `RELIABLE + VOLATILE + KEEP_LAST(1)` 订阅 `/pika_pose_l`、`/pika_pose_r`（`PoseStamped`）和 `/gripper_l/joint_state`、`/gripper_r/joint_state`（`JointState`）。它以 **30 Hz** 发布 `/pika_teleop/left|right/state`（`PikaTeleopState`，`BEST_EFFORT + VOLATILE + depth 1`）。State 含转换后的 `pose`、`twist`、`gripper_position`、`enabled`、`valid`、`velocity_valid`、两路源时间戳及数据年龄。Bridge 的固定预变换是 `(x,y,z)→(-z,y,x)`，State 的 `header.frame_id` 为 `pika_teleop_frame`。
 
 Mapper 在此预变换结果上，用稳定的左右 Pika 样本建立共享基准：原点取双侧中点，Y 从左指向右，Z 取 Pika 竖直轴，X 由 `Y×Z` 得出。标定仅在节点启动后完成一次。正式模式每侧启用时读取一次相应 RealMan 基座到 TCP 的 TF（坐标变换树），把当前 Pika 原点与该侧 TCP 原点对齐；Bag 模式使用 YAML 中的默认 TCP 位姿。没有所需 TF 时，正式 Mapper 等待，不建立该侧目标会话。启动后的位置变化按共享基准求差，不再按手柄初始朝向额外旋转。角速度按同一基准轴求导；兼容用 Pose 的姿态模式独立配置。详见 [Mapper 说明](src/pika_realman_mapper/README.md)。
 
-Mapper 对已启用且有效的侧以 **20 Hz** 发布 `/pika/l|r/cartesian_pose`（`PoseStamped`）和 `/pika/l|r/cartesian_velocity`（`TwistStamped`）；夹爪 `/pika/l|r/gripper_percentage`（`Float32`，0–1）由独立限频器默认以**最多 4 Hz** 发布。命令 Topic 是 `RELIABLE + VOLATILE + depth 1`，线速度单位 m/s，角速度 rad/s。
+Mapper 对已启用且有效的侧以 **30 Hz** 发布 `/pika/l|r/cartesian_pose`（`PoseStamped`）和 `/pika/l|r/cartesian_velocity`（`TwistStamped`）；夹爪 `/pika/l|r/gripper_percentage`（`Float32`，0–1）由独立限频器默认以**最多 4 Hz** 发布。命令 Topic 是 `RELIABLE + VOLATILE + depth 1`，线速度单位 m/s，角速度 rad/s。
 
 **`frame_id` 分开配置**：正式 Pose 为 `l/base_link`、`r/base_link`，Bag Pose 为 `l/work/pikabase`、`r/work/pikabase`；两模式速度均标记为 `l/work/pikabase`、`r/work/pikabase`。`l/link_6`、`r/link_6` 是启动时读取的 TCP TF 名称，不是速度消息的 `frame_id`。这些命名和数值在外部运动接收器中的解释仍须逐轴实测确认。
 
@@ -106,10 +106,10 @@ ros2 launch pika_teleop_bringup pika_teleop.launch.py
 
 | 项目 | 代码默认 | 正式 | Bag |
 |---|---:|---:|---:|
-| Bridge `state_rate_hz` | 100 Hz | **20 Hz** | **20 Hz** |
+| Bridge `state_rate_hz` | 100 Hz | **30 Hz** | **30 Hz** |
 | Bridge `stale_stop_ms` | 50 ms | **1000 ms** | **2000 ms** |
 | Bridge `velocity_max_dt_ms` | 50 ms | 150 ms | 150 ms |
-| Mapper `command_rate_hz` | 100 Hz | **20 Hz** | **20 Hz** |
+| Mapper `command_rate_hz` | 100 Hz | **30 Hz** | **30 Hz** |
 | Mapper `state_timeout_ms` | 100 ms | 2000 ms（保留部署机现有覆盖值） | 200 ms |
 | Mapper `gripper_publish_rate_hz` | 4 Hz | 4 Hz（YAML 未写） | 4 Hz（YAML 未写） |
 | Mapper 求导窗口 | 2 帧 | 5 帧 | 5 帧 |
